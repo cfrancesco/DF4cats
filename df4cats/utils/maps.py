@@ -44,6 +44,7 @@ class CodedSeries:
                 f'Warning: label name for "other" category ({others_name})  is present in regular values'
             )
 
+        self.nan_value = nan_value
         if any(pd.isna(series.unique())):
             self.direct_mapping[np.nan] = nan_value
             self.values.append(np.nan)
@@ -60,6 +61,11 @@ class CodedSeries:
         Return either the integer corresponding to value or other_value if value is not present in
         the mapping.
         """
+        # Needed for more consistent behavior
+        # d = pd.DataFrame([np.nan])
+        # d[0][0] in [np.nan] -> False
+        if pd.isna(value):
+            return self.nan_value
 
         if value in self.direct_mapping:
             return self.direct_mapping[value]

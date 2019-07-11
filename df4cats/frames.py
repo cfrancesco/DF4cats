@@ -179,8 +179,8 @@ class CodedDF:
         hardcoded_dict: dict,
         others_name: str = 'other',
         others_value: int = 0,
-        add_missing: bool = True,
-        discard_missing: bool = True,
+        add_extra: bool = False,
+        drop_missing: bool = True,
     ) -> 'CodedDF':
         """
         Filters the categories using only values from the dictionary.
@@ -190,15 +190,29 @@ class CodedDF:
         if self.is_encoded:
             self.decode(inplace=True)
 
-        if discard_missing:
+        if drop_missing:
             self.categorical_mapping = {}
             discard_columns = [
                 x for x in self.categorical_columns if x not in hardcoded_dict.keys()
             ]
+            if len(discard_columns) > 0:
+                print(f'Removing not present in dictionary:\n{discard_columns}')
             self.drop_columns(discard_columns, inplace=True)
             self.categorical_columns = [
-                x for x in hardcoded_dict.keys() if x in self.categorical_columns
+                x for x in self.categorical_columns if x not in discard_columns
             ]
+
+        if add_extra:
+            extra_columns = [x for x in hardcoded_dict.keys() if x not in self.data.columns]
+            empty = pd.DataFrame(
+                [[np.nan] * len(extra_columns)] * len(self.data), columns=extra_columns
+            )
+            self.data = pd.concat([self.data, empty], axis=1)
+            if len(extra_columns) > 0:
+                print(f'Added (empty) columns previously not present:\n{extra_columns}')
+            self.categorical_columns.extend(
+                [x for x in hardcoded_dict.keys() if x not in self.categorical_columns]
+            )
 
         for cat in hardcoded_dict.keys():
             # !! add mapping also for columns NOT IN self.categorical_columns !!
@@ -214,17 +228,3 @@ class CodedDF:
     def fillna(self, fill_dict=None):
         self.data, self.fill_dict = utils.ask_fillna(self.data, fill_dict=fill_dict, inplace=False)
         return self
-
-
-# # In[]:
-# cat1 = ['d', 'b', 'c']
-# cat2 = ['1', '2', np.nan]
-# cat4 = ['s', 'p', 'qr']
-# cat3 = [1, 1, 1]
-# df = pd.DataFrame({'let': cat1, 'num': cat2, 'rome': cat4, 'useless': cat3})
-# cdf = CodedDF(df, drop_columns=['let', 'num'])
-# cdf.data
-#
-#
-# # In[]:
-# print()
