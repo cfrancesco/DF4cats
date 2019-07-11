@@ -231,7 +231,11 @@ class CodedDF:
         return self
 
     def get_dummies(
-        self, add_empty: bool = False, dummy_na: bool = False, empty_others: bool = False
+        self,
+        add_empty: bool = False,
+        dummy_na: bool = False,
+        empty_others: bool = False,
+        prefix_sep='_',
     ):
         if self.is_encoded:
             self.decode(inplace=True)
@@ -239,7 +243,7 @@ class CodedDF:
             self.data,
             columns=self.categorical_columns,
             prefix=self.categorical_columns,
-            prefix_sep='_',
+            prefix_sep=prefix_sep,
             dummy_na=dummy_na,
         )
         # due to e.g. hardcoding, there could be values that do not appear in self.data
