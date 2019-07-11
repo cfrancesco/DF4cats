@@ -104,6 +104,7 @@ class CodedDF:
             clean_df = CleanDF(
                 df, drop_cols=drop_columns, column_names_char_subs=column_names_char_subs
             )
+            self.dropped_columns.extend(clean_df.dropped_cols)
             self.data = clean_df.data
         else:
             self.data = df.copy()
@@ -228,3 +229,31 @@ class CodedDF:
     def fillna(self, fill_dict=None):
         self.data, self.fill_dict = utils.ask_fillna(self.data, fill_dict=fill_dict, inplace=False)
         return self
+
+    def get_dummies(
+        self, add_empty: bool = False, dummy_na: bool = False, empty_others: bool = False
+    ):
+        if self.is_encoded:
+            self.decode(inplace=True)
+        dummified = pd.get_dummies(
+            self.data,
+            columns=self.categorical_columns,
+            prefix=self.categorical_columns,
+            prefix_sep='_',
+            dummy_na=dummy_na,
+        )
+        # due to e.g. hardcoding, there could be values that do not appear in self.data
+        if add_empty:
+            for cat in self.categorical_columns:
+                uniques = self.data[cat].unique()
+                missing_values = [
+                    x
+                    for x in self.categorical_mapping[cat].direct_mapping.keys()
+                    if x not in uniques and (not pd.isna(x) or dummy_na)
+                ]
+                for missing_value in missing_values:
+                    dummified[f'{cat}_{missing_value}'] = 0
+                if (empty_others) and (self.categorical_mapping[cat].others_name not in uniques):
+                    dummified[f'{cat}_{self.categorical_mapping[cat].others_name}'] = 0
+
+        return dummified

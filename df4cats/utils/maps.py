@@ -39,9 +39,10 @@ class CodedSeries:
             print(
                 f'Warning: label value for "other" category ({others_value}) is present in regular codes'
             )
-        if others_name in self.direct_mapping.keys():
+        self.others_name = others_name
+        if self.others_name in self.direct_mapping.keys():
             print(
-                f'Warning: label name for "other" category ({others_name})  is present in regular values'
+                f'Warning: label name for "other" category ({self.others_name})  is present in regular values'
             )
 
         self.nan_value = nan_value
@@ -50,7 +51,7 @@ class CodedSeries:
             self.values.append(np.nan)
 
         self.inverse_mapping[nan_value] = np.nan
-        self.inverse_mapping[others_value] = others_name
+        self.inverse_mapping[others_value] = self.others_name
 
         self.num_values = len(self.values)
         self.has_others = False
