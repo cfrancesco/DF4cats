@@ -7,7 +7,7 @@ pandas dataframes with categorical variables.
 
 setup(
     name='df4cats',
-    version='0.0.3.1',
+    version='0.0.4',
     author='Francesco Cardinale',
     author_email='testadicardi@gmail.com',
     description='DataFrames for cats',
