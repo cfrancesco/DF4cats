@@ -256,8 +256,8 @@ class CodedDF:
                     if x not in uniques and (not pd.isna(x) or dummy_na)
                 ]
                 for missing_value in missing_values:
-                    dummified[f'{cat}_{missing_value}'] = 0
+                    dummified[f'{cat}{prefix_sep}{missing_value}'] = 0
                 if (empty_others) and (self.categorical_mapping[cat].others_name not in uniques):
-                    dummified[f'{cat}_{self.categorical_mapping[cat].others_name}'] = 0
+                    dummified[f'{cat}{prefix_sep}{self.categorical_mapping[cat].others_name}'] = 0
 
         return dummified
