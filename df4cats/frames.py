@@ -181,7 +181,9 @@ class CodedDF(CleanDF):
         self,
         hardcoded_dict: dict,
         add_extra: bool = False,
-        drop_missing: bool = True,
+        add_other: bool = False,
+        add_nan: bool = False,
+        drop_missing: bool = False,
         others_name: str = 'other',
         others_value: int = 0,
     ) -> 'CodedDF':
@@ -194,6 +196,10 @@ class CodedDF(CleanDF):
                 values that the categorical variable can assume.
             add_extra: if True, adds empty columns for each dictionary key that does
                 not appear in the dataframe.
+            add_other: if True, adds default encoding for other values,
+                regardless its presence in the series or dictionary.
+            add_nan: if True, adds default encoding for nan values,
+                regardless its presence in the series or dictionary.
             drop_missing: removes columns in the dataframe that do not appear in the dictionary keys.
             others_name: name given to values that appear in the dataframe but not in the values of
                 the dictionary for a given key.
@@ -230,7 +236,11 @@ class CodedDF(CleanDF):
         for cat in hardcoded_dict.keys():
             # !! add mapping also for columns NOT IN self.categorical_columns !!
             self.categorical_mapping[cat] = maps.CodedSeries(
-                hardcoded_dict[cat], others_value=others_value, others_name=others_name
+                hardcoded_dict[cat],
+                others_value=others_value,
+                others_name=others_name,
+                add_other=add_other,
+                add_nan=add_nan,
             )
 
         self.encode(inplace=True)
@@ -277,3 +287,9 @@ class CodedDF(CleanDF):
                     dummified[f'{cat}{prefix_sep}{self.categorical_mapping[cat].others_name}'] = 0
 
         return dummified
+
+    def category_dimensions(self):
+        cat_features = {}
+        for cat in self.categorical_columns:
+            cat_features[cat] = self.categorical_mapping[cat].num_values
+        return cat_features

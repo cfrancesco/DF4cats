@@ -15,11 +15,17 @@ class CodedSeries:
             but where not present when the object was created (after hardcoding for instance).
         others_value: value used to encode others_name.
         nan_value: value to use to encode missing values (numpy.nan)
+        add_other: if True, adds default encoding for other values,
+            regardless its presence in the series
+        add_nan: if True, adds default encoding for nan values,
+            regardless its presence in the series
     """
 
     def __init__(
         self,
         series: Union[pd.Series, list, np.ndarray],
+        add_other: bool = False,
+        add_nan: bool = False,
         others_name: str = 'other',
         others_value: int = 0,
         nan_value: int = -1,
@@ -46,16 +52,23 @@ class CodedSeries:
             )
 
         self.nan_value = nan_value
-        if any(pd.isna(series.unique())):
+        self.has_nan = False
+        if add_nan or any(pd.isna(series.unique())):
             self.direct_mapping[np.nan] = nan_value
             self.values.append(np.nan)
+            self.has_nan = True
+
+        self.others_value = others_value
+        self.has_others = False
+        if add_other:
+            self.direct_mapping[others_name] = others_value
+            self.values.append(others_name)
+            self.has_others = True
 
         self.inverse_mapping[nan_value] = np.nan
         self.inverse_mapping[others_value] = self.others_name
 
         self.num_values = len(self.values)
-        self.has_others = False
-        self.others_value = others_value
 
     def get_mapping(self, value):
         """
@@ -65,11 +78,14 @@ class CodedSeries:
         # Needed for more consistent behavior
         # d = pd.DataFrame([np.nan])
         # d[0][0] in [np.nan] -> False
-        if pd.isna(value):
-            return self.nan_value
-
         if value in self.direct_mapping:
             return self.direct_mapping[value]
+
+        elif pd.isna(value):
+            if not self.has_nan:
+                self.has_nan = True
+                self.num_values += 1
+            return self.nan_value
 
         else:
             if not self.has_others:
