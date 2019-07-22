@@ -1,5 +1,6 @@
 ### CUSTOM
 *private
+.DS_Store
 ### END CUSTOM
 # Byte-compiled / optimized / DLL files
 __pycache__/
