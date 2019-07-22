@@ -27,8 +27,8 @@ class CodedSeries:
         add_other: bool = False,
         add_nan: bool = False,
         others_name: str = 'other',
-        others_value: int = 0,
-        nan_value: int = -1,
+        others_value: int = 1,
+        nan_value: int = 0,
     ):
         if not isinstance(series, pd.Series):
             if isinstance(series, list) or isinstance(series, np.ndarray):
@@ -39,8 +39,12 @@ class CodedSeries:
         # set automatically orders the values
         self.values = [x for x in set(series.unique()) if not pd.isna(x)]
 
-        self.direct_mapping = {value: int_value + 1 for int_value, value in enumerate(self.values)}
-        self.inverse_mapping = {int_value + 1: value for int_value, value in enumerate(self.values)}
+        self.direct_mapping = {
+            value: int_value + others_value + 1 for int_value, value in enumerate(self.values)
+        }
+        self.inverse_mapping = {
+            int_value + others_value + 1: value for int_value, value in enumerate(self.values)
+        }
         if others_value in self.inverse_mapping.keys():
             print(
                 f'Warning: label value for "other" category ({others_value}) is present in regular codes'
