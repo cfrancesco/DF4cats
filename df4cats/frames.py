@@ -109,7 +109,10 @@ class CodedDF(CleanDF):
         drop_columns: list = [],
         drop_empty=True,
         drop_single_valued=True,
+        encode_labels: bool = True,
         label_columns: list = [],
+        normalize=False,
+        normalization_mode='min-max',
     ):
         super().__init__(
             df=df,
@@ -153,7 +156,15 @@ class CodedDF(CleanDF):
         self.categorical_mapping = {}
         for cat in self.categorical_columns:
             self.categorical_mapping[cat] = maps.CodedSeries(self.data[cat])
+        if encode_labels:
+            for label in self.label_columns:
+                self.categorical_mapping[cat] = maps.CodedSeries(self.data[cat])
+
         self.is_encoded = False
+        self.normalized = normalize
+        if normalize:
+            self.normalize(mode=normalization_mode, inplace=True)
+
         self.encode(inplace=True)
 
     @utils.class_object_inplace_option
@@ -185,7 +196,7 @@ class CodedDF(CleanDF):
         add_nan: bool = False,
         drop_missing: bool = False,
         others_name: str = 'other',
-        others_value: int = 0,
+        others_value: int = 1,
     ) -> 'CodedDF':
         """
         Filters the categories using only values from the dictionary.
@@ -232,7 +243,6 @@ class CodedDF(CleanDF):
             self.categorical_columns.extend(
                 [x for x in hardcoded_dict.keys() if x not in self.categorical_columns]
             )
-
         for cat in hardcoded_dict.keys():
             # !! add mapping also for columns NOT IN self.categorical_columns !!
             self.categorical_mapping[cat] = maps.CodedSeries(
@@ -293,3 +303,25 @@ class CodedDF(CleanDF):
         for cat in self.categorical_columns:
             cat_features[cat] = self.categorical_mapping[cat].num_values
         return cat_features
+
+    @utils.class_object_inplace_option
+    def normalize(self, columns: list = None, mode: str = 'min-max'):
+
+        if not columns:
+            columns = self.continuous_columns
+
+        self.normalized = True
+
+        if mode == 'min-max':
+            self.min = self.data[columns].min()
+            self.max = self.data[columns].max()
+            self.data[columns] = (self.data[columns] - self.min) / (self.max - self.min)
+        elif mode == 'mean':
+            self.mean = self.data[columns].mean()
+            self.std = self.data[columns].std()
+            self.data[columns] = (self.data[columns] - self.mean) / self.std
+        else:
+            print(f'ERROR: Normalization mode {mode} not implemented.')
+            self.normalized = False
+
+        return self
